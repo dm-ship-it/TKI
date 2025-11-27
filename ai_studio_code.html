@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TKI Scoring Calculator & Assessment</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                },
+            },
+            // Safelist dynamic classes used in JS
+            safelist: [
+                'border-red-500', 'text-red-700', 'text-red-600', 'bg-red-50', 'ring-red-500', 'bg-red-500',
+                'border-green-500', 'text-green-700', 'text-green-600', 'bg-green-50', 'ring-green-500', 'bg-green-500',
+                'border-orange-500', 'text-orange-700', 'text-orange-600', 'bg-orange-50', 'ring-orange-500', 'bg-orange-500',
+                'border-gray-500', 'text-gray-700', 'text-gray-600', 'bg-gray-50', 'ring-gray-500', 'bg-gray-500',
+                'border-purple-500', 'text-purple-700', 'text-purple-600', 'bg-purple-50', 'ring-purple-500', 'bg-purple-500',
+                'border-yellow-500', 'border-blue-500' 
+            ]
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .slide-container {
+            transition: all 0.3s ease-in-out;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .option-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .option-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 4px;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 md:p-8">
+
+    <div id="main-container" class="w-full max-w-7xl bg-white rounded-2xl shadow-2xl overflow-hidden min-h-[720px] flex flex-col relative">
+        
+        <!-- ==================== HEADER ==================== -->
+        <div id="app-header" class="p-8 pb-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center">
+                    <div class="bg-blue-100 rounded-full p-3 mr-4">
+                        <i class="fas fa-calculator text-3xl text-blue-600"></i>
+                    </div>
+                    <h2 class="font-serif text-3xl font-bold text-gray-800">TKI Scoring Calculator</h2>
+                </div>
+                
+                <div class="flex items-center bg-gray-100 rounded-full px-5 py-2 self-start md:self-auto">
+                    <i class="fas fa-stopwatch text-blue-600 mr-2"></i>
+                    <span class="font-sans text-sm font-medium text-gray-700">3-5 minutes</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col flex-1 p-8 pt-0 relative">
+            
+            <!-- ==================== VIEW 1: CALCULATOR & RESULTS ==================== -->
+            <div id="calculator-view" class="flex flex-col lg:flex-row gap-8 h-full fade-in">
+                
+                <!-- Left Column: Inputs -->
+                <div class="w-full lg:w-1/3 bg-gray-50 rounded-xl p-6 flex flex-col shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <div class="bg-blue-100 rounded-full p-2 mr-3">
+                                <i class="fas fa-edit text-blue-600"></i>
+                            </div>
+                            <h3 class="font-sans text-xl font-bold text-blue-800">Enter Your Scores</h3>
+                        </div>
+                    </div>
+
+                    <!-- CTA to Assessment -->
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+                        <h4 class="font-bold text-blue-900 text-sm mb-2">Don't have your scores yet?</h4>
+                        <button onclick="showAssessment()" class="w-full py-2 bg-white border border-blue-200 hover:border-blue-400 text-blue-700 font-semibold rounded-md shadow-sm flex items-center justify-center transition-all text-sm group">
+                            <i class="fas fa-clipboard-list mr-2 text-blue-500 group-hover:text-blue-700"></i>
+                            Take the Assessment
+                        </button>
+                    </div>
+
+                    <!-- Input Fields (Generated via JS or static below) -->
+                    <div id="input-container" class="space-y-4 flex-grow">
+                        <!-- Inputs injected by JS -->
+                    </div>
+
+                    <button onclick="calculateResults()" class="mt-6 w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-lg shadow-lg flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1">
+                        <i class="fas fa-chart-pie mr-2"></i>
+                        <span>Calculate Results</span>
+                    </button>
+                </div>
+
+                <!-- Right Column: Reference & Results -->
+                <div class="w-full lg:w-2/3 flex flex-col gap-6">
+                    
+                    <!-- Reference Table -->
+                    <div class="bg-blue-50 rounded-xl p-6 shadow-sm">
+                        <div class="flex items-center mb-6">
+                            <div class="bg-blue-100 rounded-full p-2 mr-3">
+                                <i class="fas fa-chart-column text-blue-600"></i>
+                            </div>
+                            <h3 class="font-sans text-xl font-bold text-blue-800">Interpretation Table</h3>
+                        </div>
+                        <div id="reference-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            <!-- Reference items injected by JS -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex-grow relative">
+                        <!-- Instructions (Shown initially) -->
+                        <div id="instructions-view" class="bg-green-50 rounded-xl p-6 shadow-sm h-full fade-in">
+                            <div class="flex items-center mb-6">
+                                <div class="bg-green-100 rounded-full p-2 mr-3">
+                                    <i class="fas fa-info-circle text-green-600"></i>
+                                </div>
+                                <h3 class="font-sans text-xl font-bold text-green-800">How to Use This Calculator</h3>
+                            </div>
+                            <div class="flex flex-col space-y-4">
+                                <div class="flex items-start">
+                                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-sans text-sm font-bold mr-3 flex-shrink-0 mt-0.5">1</div>
+                                    <p class="font-sans text-sm text-gray-700">Count your answers from the assessment (Competing, Collaborating, etc.).</p>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-sans text-sm font-bold mr-3 flex-shrink-0 mt-0.5">2</div>
+                                    <p class="font-sans text-sm text-gray-700">Enter your scores in the left column input fields.</p>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-sans text-sm font-bold mr-3 flex-shrink-0 mt-0.5">3</div>
+                                    <p class="font-sans text-sm text-gray-700">Click "Calculate Results" to analyze your conflict style profile.</p>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-sans text-sm font-bold mr-3 flex-shrink-0 mt-0.5">4</div>
+                                    <p class="font-sans text-sm text-gray-700">Review insights about your dominant, backup, and underused modes.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Results (Hidden initially) -->
+                        <div id="results-view" class="bg-indigo-50 rounded-xl p-6 shadow-sm hidden fade-in">
+                            <div class="flex items-center mb-6">
+                                <div class="bg-indigo-100 rounded-full p-2 mr-3">
+                                    <i class="fas fa-lightbulb text-indigo-600"></i>
+                                </div>
+                                <h3 class="font-sans text-xl font-bold text-indigo-800">Your Conflict Style Insights</h3>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Dominant -->
+                                <div class="bg-white rounded-lg p-5 border-l-4 border-yellow-500 shadow-md transform transition-all hover:scale-[1.01]">
+                                    <div class="flex items-center mb-2">
+                                        <div class="bg-yellow-100 rounded-full p-2 mr-3">
+                                            <i class="fas fa-trophy text-yellow-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-sans text-lg font-bold text-gray-800">
+                                                Dominant Mode: <span id="res-dominant" class="text-yellow-700"></span>
+                                            </h4>
+                                            <p class="font-sans text-sm text-gray-600">Your default approach under stress</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Backup -->
+                                <div class="bg-white rounded-lg p-5 border-l-4 border-blue-500 shadow-md transform transition-all hover:scale-[1.01]">
+                                    <div class="flex items-center mb-2">
+                                        <div class="bg-blue-100 rounded-full p-2 mr-3">
+                                            <i class="fas fa-handshake text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-sans text-lg font-bold text-gray-800">
+                                                Backup Mode: <span id="res-backup" class="text-blue-700"></span>
+                                            </h4>
+                                            <p class="font-sans text-sm text-gray-600">Your conscious choice when your dominant mode isn't working</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Underused -->
+                                <div class="bg-white rounded-lg p-5 border-l-4 border-purple-500 shadow-md transform transition-all hover:scale-[1.01]">
+                                    <div class="flex items-center mb-2">
+                                        <div class="bg-purple-100 rounded-full p-2 mr-3">
+                                            <i class="fas fa-chart-line text-purple-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-sans text-lg font-bold text-gray-800">
+                                                Underused Modes: <span id="res-underused" class="text-purple-700"></span>
+                                            </h4>
+                                            <p class="font-sans text-sm text-gray-600">Development opportunities to expand your repertoire</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button onclick="resetCalculator()" class="mt-6 text-sm text-gray-500 hover:text-blue-600 underline">Start Over</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== VIEW 2: ASSESSMENT ==================== -->
+            <div id="assessment-view" class="w-full h-full flex flex-col hidden fade-in pt-4">
+                
+                <!-- Header Section -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 rounded-full p-3 mr-4">
+                            <i class="fas fa-clipboard-check text-2xl text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 font-sans">Discover Your Conflict Mode</h2>
+                            <p class="text-gray-500 text-sm">TKI Assessment</p>
+                        </div>
+                    </div>
+                    <button onclick="showCalculator()" class="text-gray-500 hover:text-gray-700 font-medium text-sm flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Calculator
+                    </button>
+                </div>
+
+                <!-- Info Banner -->
+                <div class="bg-blue-50 rounded-xl p-4 mb-6 flex flex-wrap gap-4 md:gap-8 justify-between items-center shadow-sm border border-blue-100">
+                    <div class="flex items-center">
+                        <i class="fas fa-clock text-blue-600 mr-2"></i>
+                        <span class="text-sm font-medium text-blue-800">~5 minutes</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-brain text-blue-600 mr-2"></i>
+                        <span class="text-sm font-medium text-blue-800">Choose your first instinct</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-list-ol text-blue-600 mr-2"></i>
+                        <span id="progress-text" class="text-sm font-medium text-blue-800">0/12 questions answered</span>
+                    </div>
+                </div>
+
+                <!-- Questions Grid -->
+                <div id="questions-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                    <!-- Questions injected via JS -->
+                </div>
+
+                <!-- Submit Section -->
+                <div class="mt-auto pt-6 text-center border-t border-gray-100 pb-8">
+                    <button id="submit-assessment-btn" onclick="submitAssessment()" disabled 
+                        class="px-10 py-3 rounded-lg font-bold shadow-lg transition-all duration-300 transform bg-gray-300 text-gray-500 cursor-not-allowed">
+                        Answer All Questions (0/12)
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== LOGIC ==================== -->
+    <script>
+        // --- CONSTANTS & DATA ---
+        const MODE_CONFIGS = [
+            { key: 'competing', label: 'Competing', color: 'red', maxScore: 6, thresholds: { high: '4-6', medium: '2-3', low: '0-1' } },
+            { key: 'collaborating', label: 'Collaborating', color: 'green', maxScore: 8, thresholds: { high: '5-8', medium: '3-4', low: '0-2' } },
+            { key: 'compromising', label: 'Compromising', color: 'orange', maxScore: 4, thresholds: { high: '3-4', medium: '2', low: '0-1' } },
+            { key: 'avoiding', label: 'Avoiding', color: 'gray', maxScore: 3, thresholds: { high: '3', medium: '2', low: '0-1' } },
+            { key: 'accommodating', label: 'Accommodating', color: 'purple', maxScore: 3, thresholds: { high: '3', medium: '2', low: '0-1' } }
+        ];
+
+        const QUESTIONS = [
+            { id: 1, text: "When priorities clash between regions...", optionA: { text: "I push for my region's approach", mode: 'competing' }, optionB: { text: "I look for a solution that works for everyone", mode: 'collaborating' } },
+            { id: 2, text: "When team members disagree on launch timing...", optionA: { text: "I facilitate discussion until consensus emerges", mode: 'collaborating' }, optionB: { text: "I suggest we meet halfway", mode: 'compromising' } },
+            { id: 3, text: "When someone challenges your decision...", optionA: { text: "I stand firm and explain my rationale", mode: 'competing' }, optionB: { text: "I consider if they might be right and adjust", mode: 'accommodating' } },
+            { id: 4, text: "When there's tension in a meeting...", optionA: { text: "I change the subject to avoid escalation", mode: 'avoiding' }, optionB: { text: "I address it directly and work through it", mode: 'collaborating' } },
+            { id: 5, text: "When two team members have personality conflicts...", optionA: { text: "I let them work it out themselves", mode: 'avoiding' }, optionB: { text: "I mediate to find common ground", mode: 'compromising' } },
+            { id: 6, text: "When budget cuts are necessary...", optionA: { text: "I make the tough call quickly", mode: 'competing' }, optionB: { text: "I involve the team in prioritization", mode: 'collaborating' } },
+            { id: 7, text: "When your approach differs from your peer's...", optionA: { text: "I defer to their expertise", mode: 'accommodating' }, optionB: { text: "I propose we pilot both approaches", mode: 'compromising' } },
+            { id: 8, text: "When meeting becomes heated debate...", optionA: { text: "I table the discussion for later", mode: 'avoiding' }, optionB: { text: "I enforce ground rules and continue", mode: 'competing' } },
+            { id: 9, text: "When cross-functional alignment is needed...", optionA: { text: "I invest time to understand all perspectives", mode: 'collaborating' }, optionB: { text: "I propose a practical middle ground", mode: 'compromising' } },
+            { id: 10, text: "When your team member needs development...", optionA: { text: "I give direct feedback immediately", mode: 'competing' }, optionB: { text: "I coach them to their own insights", mode: 'collaborating' } },
+            { id: 11, text: "When stakeholders want different outcomes...", optionA: { text: "I support the relationship that matters most", mode: 'accommodating' }, optionB: { text: "I find creative ways to satisfy both", mode: 'collaborating' } },
+            { id: 12, text: "When facing resistance to change...", optionA: { text: "I implement despite objections", mode: 'competing' }, optionB: { text: "I engage resistors to co-create solutions", mode: 'collaborating' } }
+        ];
+
+        // --- STATE ---
+        let userScores = { competing: 0, collaborating: 0, compromising: 0, avoiding: 0, accommodating: 0 };
+        let assessmentAnswers = {};
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCalculatorInputs();
+            renderReferenceTable();
+            renderQuestions();
+        });
+
+        // --- VIEW NAVIGATION ---
+        function showAssessment() {
+            document.getElementById('calculator-view').classList.add('hidden');
+            document.getElementById('app-header').classList.add('hidden'); // Hide main header
+            document.getElementById('assessment-view').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showCalculator() {
+            document.getElementById('assessment-view').classList.add('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+            document.getElementById('calculator-view').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetCalculator() {
+            userScores = { competing: 0, collaborating: 0, compromising: 0, avoiding: 0, accommodating: 0 };
+            
+            // Reset inputs
+            MODE_CONFIGS.forEach(mode => {
+                const el = document.getElementById(`input-${mode.key}`);
+                if(el) el.value = '';
+            });
+
+            // Hide results, show instructions
+            document.getElementById('results-view').classList.add('hidden');
+            document.getElementById('instructions-view').classList.remove('hidden');
+            
+            // Reset assessment
+            assessmentAnswers = {};
+            renderQuestions();
+            updateAssessmentProgress();
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderCalculatorInputs() {
+            const container = document.getElementById('input-container');
+            let html = '';
+            
+            MODE_CONFIGS.forEach(mode => {
+                html += `
+                <div class="bg-white rounded-lg p-4 border-l-4 border-${mode.color}-500 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="font-sans text-sm font-semibold text-${mode.color}-700">
+                            ${mode.label}
+                        </label>
+                        <span class="font-sans text-xs text-${mode.color}-600">
+                            Max: ${mode.maxScore}
+                        </span>
+                    </div>
+                    <input id="input-${mode.key}" 
+                        class="w-full px-4 py-3 text-lg border border-gray-300 rounded-md font-sans font-medium focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" 
+                        type="number" min="0" max="${mode.maxScore}" placeholder="0" 
+                        onchange="updateScore('${mode.key}', this.value)"
+                    />
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderReferenceTable() {
+            const container = document.getElementById('reference-grid');
+            let html = '';
+            MODE_CONFIGS.forEach(mode => {
+                html += `
+                <div class="bg-white rounded-lg p-3 border-t-4 border-${mode.color}-500 shadow-sm">
+                    <h4 class="font-sans text-sm font-semibold text-${mode.color}-700 mb-2">
+                        ${mode.label}
+                    </h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-sans text-xs text-gray-600">High</span>
+                            <span class="font-sans text-xs font-medium text-${mode.color}-600">${mode.thresholds.high}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-sans text-xs text-gray-600">Medium</span>
+                            <span class="font-sans text-xs font-medium text-orange-600">${mode.thresholds.medium}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-sans text-xs text-gray-600">Low</span>
+                            <span class="font-sans text-xs font-medium text-gray-600">${mode.thresholds.low}</span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-grid');
+            let html = '';
+            
+            QUESTIONS.forEach(q => {
+                const selectedMode = assessmentAnswers[q.id];
+                
+                // Helper to generate option button HTML
+                const renderOption = (option, label) => {
+                    const isSelected = selectedMode === option.mode;
+                    const modeColor = MODE_CONFIGS.find(m => m.key === option.mode).color;
+                    
+                    const baseClasses = "w-full text-left rounded-lg p-3 transition-all duration-200 flex items-start group relative overflow-hidden option-card";
+                    const stateClasses = isSelected 
+                        ? `bg-${modeColor}-50 ring-2 ring-${modeColor}-500`
+                        : "bg-white hover:bg-gray-50 border border-gray-100";
+                    
+                    // We inline the border color style for the ::before pseudo-element effect simulation using a div
+                    const barDiv = `<div class="absolute left-0 top-0 bottom-0 w-1 bg-${modeColor}-500"></div>`;
+                    
+                    return `
+                    <button onclick="handleOptionSelect(${q.id}, '${option.mode}')" 
+                        class="${baseClasses} ${stateClasses}">
+                        ${barDiv}
+                        <span class="text-xs font-bold mr-2 mt-0.5 text-${modeColor}-600">${label}.</span>
+                        <p class="text-xs text-gray-700 leading-relaxed">${option.text}</p>
+                    </button>
+                    `;
+                };
+
+                const cardBorder = selectedMode ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200';
+
+                html += `
+                <div class="bg-white rounded-lg border p-5 transition-all duration-300 hover:shadow-lg ${cardBorder}">
+                    <div class="text-center mb-4">
+                        <span class="text-xs font-bold tracking-wider text-gray-500 bg-gray-100 px-3 py-1 rounded-full uppercase">
+                            Question ${q.id}
+                        </span>
+                        <p class="text-sm text-gray-800 mt-3 font-medium min-h-[40px]">${q.text}</p>
+                    </div>
+                    <div class="space-y-3">
+                        ${renderOption(q.optionA, 'A')}
+                        ${renderOption(q.optionB, 'B')}
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // --- CALCULATOR LOGIC ---
+        function updateScore(key, value) {
+            const val = parseInt(value) || 0;
+            const max = MODE_CONFIGS.find(m => m.key === key).maxScore;
+            
+            // Clamp value
+            const finalVal = Math.min(Math.max(val, 0), max);
+            userScores[key] = finalVal;
+            
+            // Update input visually if clamped (optional UI polish)
+            const inputEl = document.getElementById(`input-${key}`);
+            if(inputEl.value != finalVal && inputEl.value !== '') {
+                inputEl.value = finalVal;
+            }
+        }
+
+        function calculateResults() {
+            const scoreValues = Object.values(userScores);
+            const maxScore = Math.max(...scoreValues);
+            const minScore = Math.min(...scoreValues);
+
+            // Dominant
+            const dominantKeys = Object.keys(userScores).filter(key => userScores[key] === maxScore);
+
+            // Backup
+            const uniqueScores = [...new Set(scoreValues)].sort((a, b) => b - a);
+            let backupKeys = [];
+            if (uniqueScores.length > 1) {
+                const secondHighest = uniqueScores[1];
+                backupKeys = Object.keys(userScores).filter(key => userScores[key] === secondHighest);
+            }
+
+            // Underused
+            const underusedKeys = Object.keys(userScores).filter(key => userScores[key] === minScore);
+
+            // Render Results
+            const getLabels = (keys) => keys.map(k => MODE_CONFIGS.find(m => m.key === k).label).join(', ') || 'None';
+            
+            document.getElementById('res-dominant').textContent = getLabels(dominantKeys);
+            document.getElementById('res-backup').textContent = getLabels(backupKeys);
+            document.getElementById('res-underused').textContent = getLabels(underusedKeys);
+
+            // Show UI
+            document.getElementById('instructions-view').classList.add('hidden');
+            document.getElementById('results-view').classList.remove('hidden');
+        }
+
+        // --- ASSESSMENT LOGIC ---
+        function handleOptionSelect(qId, mode) {
+            assessmentAnswers[qId] = mode;
+            renderQuestions(); // Re-render to show selection state (inefficient but simple for small app)
+            updateAssessmentProgress();
+        }
+
+        function updateAssessmentProgress() {
+            const count = Object.keys(assessmentAnswers).length;
+            const total = QUESTIONS.length;
+            
+            // Update Text
+            document.getElementById('progress-text').textContent = `${count}/${total} questions answered`;
+            
+            // Update Button
+            const btn = document.getElementById('submit-assessment-btn');
+            if (count === total) {
+                btn.disabled = false;
+                btn.textContent = "Submit Assessment";
+                btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'hover:-translate-y-1', 'hover:shadow-xl', 'cursor-pointer');
+            } else {
+                btn.disabled = true;
+                btn.textContent = `Answer All Questions (${count}/${total})`;
+                btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'hover:-translate-y-1', 'hover:shadow-xl', 'cursor-pointer');
+            }
+        }
+
+        function submitAssessment() {
+            // Reset scores
+            userScores = { competing: 0, collaborating: 0, compromising: 0, avoiding: 0, accommodating: 0 };
+            
+            // Tally
+            Object.values(assessmentAnswers).forEach(mode => {
+                userScores[mode]++;
+            });
+
+            // Update Input Fields visually
+            MODE_CONFIGS.forEach(mode => {
+                const el = document.getElementById(`input-${mode.key}`);
+                if(el) el.value = userScores[mode.key];
+            });
+
+            // Switch view and Calculate
+            showCalculator();
+            calculateResults();
+        }
+    </script>
+</body>
+</html>
